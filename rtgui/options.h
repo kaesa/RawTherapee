@@ -71,6 +71,7 @@ struct SaveFormat {
         int _png_bits,
         int _jpeg_quality,
         int _jpeg_sub_samp,
+        int _jxl_quality,
         int _tiff_bits,
         bool _tiff_float,
         bool _tiff_uncompressed,
@@ -81,6 +82,7 @@ struct SaveFormat {
         pngBits(_png_bits),
         jpegQuality(_jpeg_quality),
         jpegSubSamp(_jpeg_sub_samp),
+        jxlQuality(_jxl_quality),
         tiffBits(_tiff_bits),
         tiffFloat(_tiff_float),
         tiffUncompressed(_tiff_uncompressed),
@@ -97,8 +99,9 @@ struct SaveFormat {
         SaveFormat(
             _format,
             _png_bits,
-            90,
+            92,
             2,
+            92,
             _tiff_bits,
             _tiff_float,
             true,
@@ -116,6 +119,7 @@ struct SaveFormat {
     int pngBits;
     int jpegQuality;
     int jpegSubSamp;  // 1=best compression, 3=best quality
+    float jxlQuality;
     int tiffBits;
     bool tiffFloat;
     bool tiffUncompressed;
