@@ -2244,7 +2244,7 @@ DCPProfile* DCPStore::getProfile(const Glib::ustring& filename) const
         // Add profile
         profile_cache[key] = res;
         if (settings->verbose) {
-            printf("DCP profile '%s' loaded from disk\n", filename.c_str());
+            std::cout << "DCP profile '" << filename.c_str() << "' loaded from disk" << std::endl;
         }
         return res;
     }
