@@ -917,6 +917,13 @@ void RTWindow::showPreferences ()
 void RTWindow::setProgress(double p)
 {
     prProgBar.set_fraction(p);
+    if (App::get().options().mainNBVertical) {
+        if (p < 0.01) {
+            prProgBar.hide();
+        } else {
+            prProgBar.show();
+        }
+    }
 }
 
 void RTWindow::setProgressStr(const Glib::ustring& str)
