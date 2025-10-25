@@ -443,8 +443,6 @@ bool FilePanel::handleShortcutKeyRelease(GdkEventKey *event)
 
 void FilePanel::loadingThumbs(Glib::ustring str, double rate)
 {
-    GThreadLock lock; // All GUI access from idle_add callbacks or separate thread HAVE to be protected
-
     if( !str.empty()) {
         parent->setProgressStr(str);
     }
