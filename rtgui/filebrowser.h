@@ -130,7 +130,7 @@ protected:
     BatchPParamsChangeListener* bppcl;
     FileBrowserListener* tbl;
     BrowserFilter filter;
-    int numFiltered;
+    std::size_t numFiltered;
 
     void toTrashRequested   (std::vector<FileBrowserEntry*> tbe);
     void fromTrashRequested (std::vector<FileBrowserEntry*> tbe);
@@ -172,7 +172,7 @@ public:
     void applyPartialMenuItemActivated (ProfileStoreLabel *label);
 
     void applyFilter (const BrowserFilter& filter);
-    int getNumFiltered()
+    std::size_t getNumFiltered()
     {
         return numFiltered;
     }
@@ -186,7 +186,6 @@ public:
 
     void saveThumbnailHeight (int height) override;
     int  getThumbnailHeight () override;
-
 
     void enableTabMode(bool enable);
     bool isInTabMode() override
