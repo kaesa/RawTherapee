@@ -87,7 +87,8 @@ std::unique_ptr<Exiv2::Image> open_exiv2(const Glib::ustring& fname,
 #else
         auto error_code = 1;
 #endif
-        throw Exiv2::Error(error_code, "exiv2: invalid image");
+        Glib::ustring errorMsg = "exiv2: invalid image " + fname;
+        throw Exiv2::Error(error_code, errorMsg.c_str());
     }
     std::unique_ptr<Exiv2::Image> ret(image.release());
     return ret;
@@ -613,6 +614,16 @@ Exiv2::ExifData Exiv2Metadata::getOutputExifData() const
         }
     }
     return exif;
+}
+
+std::vector<uint8_t> Exiv2Metadata::getExifDataBlobForJXL() const
+{
+    Exiv2::ExifData exif = getOutputExifData();
+    Exiv2::Blob blob;
+
+    Exiv2::ExifParser::encode(blob, Exiv2::bigEndian, exif);
+
+    return blob;
 }
 
 

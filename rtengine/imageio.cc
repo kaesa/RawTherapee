@@ -874,7 +874,9 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
     std::vector<std::uint8_t> const compressed = getFileData(fname);
 
     if (compressed.empty()) {
-        std::cerr << "Error: loadJXL failed to get data from file" << std::endl;
+        if (settings->verbose) {
+            std::cerr << "Error: loadJXL failed to get data from file" << std::endl;
+        }
         return IMIO_READERROR;
     }
 
@@ -884,17 +886,18 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
     auto dec = JxlDecoderMake(nullptr);
 
     if (JXL_DEC_SUCCESS !=
-            JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO |
-                                      JXL_DEC_COLOR_ENCODING |
-                                      JXL_DEC_FULL_IMAGE)) {
-        std::cerr << "Error: JxlDecoderSubscribeEvents failed" << std::endl;
+            JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE)
+        ) {
+        if (settings->verbose) {
+            std::cerr << "Error: JxlDecoderSubscribeEvents failed" << std::endl;
+        }
         return IMIO_HEADERERROR;
     }
 
-    if (JXL_DEC_SUCCESS !=
-            JxlDecoderSetParallelRunner(dec.get(), JxlResizableParallelRunner,
-                                        runner.get())) {
-        std::cerr << "Error: JxlDecoderSetParallelRunner failed" << std::endl;
+    if (JXL_DEC_SUCCESS != JxlDecoderSetParallelRunner(dec.get(), JxlResizableParallelRunner, runner.get())) {
+        if (settings->verbose) {
+            std::cerr << "Error: JxlDecoderSetParallelRunner failed" << std::endl;
+        }
         return IMIO_HEADERERROR;
     }
 
@@ -906,7 +909,9 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
 
         if (status == JXL_DEC_BASIC_INFO) {
             if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(dec.get(), &info)) {
-                std::cerr << "Error: JxlDecoderGetBasicInfo failed" << std::endl;
+                if (settings->verbose) {
+                    std::cerr << "Error: JxlDecoderGetBasicInfo failed" << std::endl;
+                }
                 return IMIO_HEADERERROR;
             }
 
@@ -925,7 +930,7 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
 #else
                     JxlDecoderGetICCProfileSize(dec.get(), _PROFILE_, &icc_size)
 #endif
-               ) {
+               && settings->verbose) {
                 std::cerr << "Warning: JxlDecoderGetICCProfileSize failed" << std::endl;
             }
 
@@ -943,13 +948,17 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
                             icc_profile.data(), icc_profile.size())
 #endif
                    ) {
-                    std::cerr << "Warning: JxlDecoderGetColorAsICCProfile failed" << std::endl;
+                    if (settings->verbose) {
+                        std::cerr << "Warning: JxlDecoderGetColorAsICCProfile failed" << std::endl;
+                    }
                 } else {
                     embProfile = cmsOpenProfileFromMem(icc_profile.data(),
                                                        icc_profile.size());
                 }
             } else {
-                std::cerr << "Warning: Empty ICC data." << std::endl;
+                if (settings->verbose) {
+                    std::cerr << "Warning: Empty ICC data." << std::endl;
+                }
             }
         } else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
             // Note: If assert is triggered, change to assignment.
@@ -957,16 +966,19 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
             // regardless of the original encoding intent.
             assert(format.data_type == JXL_TYPE_FLOAT);
 
-            if (JXL_DEC_SUCCESS !=
-                    JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
-                std::cerr << "Error: JxlDecoderImageOutBufferSize failed" << std::endl;
+            if (JXL_DEC_SUCCESS != JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
+                if (settings->verbose) {
+                    std::cerr << "Error: JxlDecoderImageOutBufferSize failed" << std::endl;
+                }
                 return IMIO_READERROR;
             }
 
             buffer.resize(buffer_size);
 
             if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(dec.get(), &format, buffer.data(), buffer.size())) {
-                std::cerr << "Error: JxlDecoderSetImageOutBuffer failed" << std::endl;
+                if (settings->verbose) {
+                    std::cerr << "Error: JxlDecoderSetImageOutBuffer failed" << std::endl;
+                }
                 return IMIO_READERROR;
             }
         } else if (status == JXL_DEC_FULL_IMAGE ||
@@ -978,13 +990,19 @@ int ImageIO::loadJXL(const Glib::ustring &fname)
             // Decoding complete.  Decoder will be released automatically.
             break;
         } else if (status == JXL_DEC_NEED_MORE_INPUT) {
-            std::cerr << "Error: Decoder needs more input data" << std::endl;
+            if (settings->verbose) {
+                std::cerr << "Error: Decoder needs more input data" << std::endl;
+            }
             return IMIO_READERROR;
         } else if (status == JXL_DEC_ERROR) {
-            std::cerr << "Error: Decoder error" << std::endl;
+            if (settings->verbose) {
+                std::cerr << "Error: Decoder error" << std::endl;
+            }
             return IMIO_READERROR;
         } else {
-            std::cerr << "Error: Unknown decoder status" << std::endl;
+            if (settings->verbose) {
+                std::cerr << "Error: Unknown decoder status" << std::endl;
+            }
             return IMIO_READERROR;
         }
     } // end grand decode loop
@@ -1031,9 +1049,10 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
     auto runner =
         JxlThreadParallelRunnerMake(nullptr, JxlThreadParallelRunnerDefaultNumWorkerThreads());
 
-    if (JxlEncoderSetParallelRunner(enc.get(), JxlThreadParallelRunner, runner.get()) !=
-            JXL_ENC_SUCCESS) {
-        std::cerr << "Error: JxlEncoderSetParallelRunner failed" << std::endl;
+    if (JxlEncoderSetParallelRunner(enc.get(), JxlThreadParallelRunner, runner.get()) != JXL_ENC_SUCCESS) {
+        if (settings->verbose) {
+            std::cerr << "Error: JxlEncoderSetParallelRunner failed" << std::endl;
+        }
         return IMIO_CANNOTWRITEFILE;
     }
 
@@ -1064,7 +1083,9 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
 #endif
 
     if (JxlEncoderSetBasicInfo(enc.get(), &basic_info) != JXL_ENC_SUCCESS) {
-        std::cerr << "Error: JxlEncoderSetBasicInfo failed" << std::endl;
+        if (settings->verbose) {
+            std::cerr << "Error: JxlEncoderSetBasicInfo failed" << std::endl;
+        }
         return IMIO_CANNOTWRITEFILE;
     }
 
@@ -1074,7 +1095,9 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
     if (!profileData.empty()) {
         JxlEncoderSetICCProfile(enc.get(), reinterpret_cast<const unsigned char *>(profileData.data()), profileData.size());
     } else if (JxlEncoderSetColorEncoding(enc.get(), &color_encoding) != JXL_ENC_SUCCESS) {
-        std::cerr << "Warning: JxlEncoderSetColorEncoding failed" << std::endl;
+        if (settings->verbose) {
+            std::cerr << "Warning: JxlEncoderSetColorEncoding failed" << std::endl;
+        }
     }
 
     const std::size_t stride = sizeof(float) * 3 * width;
@@ -1093,12 +1116,33 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
                 frame_settings, &pixel_format, static_cast<const void *>(imagebuffer.data()), imagebuffer.size()
             ) != JXL_ENC_SUCCESS
        ) {
-        std::cerr << "Error: JxlEncoderAddImageFrame failed" << std::endl;
+        if (settings->verbose) {
+            std::cerr << "Error: JxlEncoderAddImageFrame failed" << std::endl;
+        }
         return IMIO_CANNOTWRITEFILE;
     }
 
-    // TODO: Save Exif data
-    // JxlEncoderAddBox(enc.get(), "Exif", exif.data(), exif.size(), true);
+    // Save Exif data
+    if ( !metadataInfo.filename().empty()) {
+        std::vector<std::uint8_t> exif = metadataInfo.getExifDataBlobForJXL();
+        if (exif.size()) {
+            JxlEncoderUseBoxes(enc.get());
+
+            if (JxlEncoderAddBox(enc.get(), "Exif", exif.data(), exif.size(), JXL_FALSE) == JXL_ENC_ERROR) {
+                if (settings->verbose) {
+                    std::cerr<<"Failed to encode exif box"<<std::endl;
+                }
+            }
+        } else {
+            if (settings->verbose) {
+                std::cerr<<"Failed to get ExifBlob from metadata for "<<fname<<std::endl;
+            }
+        }
+    } else {
+        if (settings->verbose) {
+            std::cerr<<"There is no metadataInfo for "<<fname<<std::endl;
+        }
+    }
 
     JxlEncoderCloseInput(enc.get());
 
@@ -1130,7 +1174,9 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
     if (saveFileData(fname, output)) {
         return IMIO_SUCCESS;
     } else {
-        std::cerr << "Error: saveFileData failed" << std::endl;
+        if (settings->verbose) {
+            std::cerr << "Error: saveFileData failed" << std::endl;
+        }
         return IMIO_CANNOTWRITEFILE;
     }
 }

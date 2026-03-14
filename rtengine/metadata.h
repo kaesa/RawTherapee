@@ -60,7 +60,8 @@ public:
 
     void getDimensions(int &w, int &h) const;
 
-    Exiv2::ExifData getOutputExifData() const;
+    Exiv2::ExifData         getOutputExifData() const;
+    std::vector<uint8_t>    getExifDataBlobForJXL() const;
 
     static Glib::ustring xmpSidecarPath(const Glib::ustring& path);
     static Exiv2::XmpData getXmpSidecar(const Glib::ustring& path);
