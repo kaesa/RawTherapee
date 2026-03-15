@@ -1123,8 +1123,9 @@ int ImageIO::saveJXL(const Glib::ustring &fname, float quality) const
     }
 
     // Save Exif data
-    if ( !metadataInfo.filename().empty()) {
+    if (!metadataInfo.filename().empty()) {
         std::vector<std::uint8_t> exif = metadataInfo.getExifDataBlobForJXL();
+
         if (exif.size()) {
             JxlEncoderUseBoxes(enc.get());
 

@@ -618,10 +618,55 @@ Exiv2::ExifData Exiv2Metadata::getOutputExifData() const
 
 std::vector<uint8_t> Exiv2Metadata::getExifDataBlobForJXL() const
 {
-    Exiv2::ExifData exif = getOutputExifData();
+    bool preserve_all_tags = true;
+    try {
+        load();
+    } catch(const std::exception& exc) {
+        if (settings->verbose) {
+            std::cout << "EXIF LOAD ERROR: " << exc.what() << std::endl;
+        }
+
+        preserve_all_tags = false;
+    }
+
+    auto dst = Exiv2::ImageFactory::create(Exiv2::ImageType::exv);
+    if (image_.get()) {
+        dst->setIptcData(image_->iptcData());
+        dst->setXmpData(image_->xmpData());
+        if (merge_xmp_) {
+            do_merge_xmp(dst.get(), false);
+        }
+
+        auto srcexif = image_->exifData();
+        if (!preserve_all_tags) {
+            remove_unwanted(srcexif);
+        }
+
+        for (auto &tag : srcexif) {
+            if (tag.count() > 0) {
+                dst->exifData()[tag.key()] = tag;
+            }
+        }
+    } else {
+        dst->setExifData(exif_data_);
+        dst->setIptcData(iptc_data_);
+        dst->setXmpData(xmp_data_);
+    }
+
+    dst->exifData()["Exif.Image.Software"] = "RawTherapee " RTVERSION;
+
+    std::time_t t = std::time(nullptr);
+    char mbstr[20];
+    if (std::strftime(mbstr, sizeof(mbstr), "%Y:%m:%d %H:%M:%S", std::localtime(&t))) {
+        dst->exifData()["Exif.Image.DateTime"] = mbstr;
+    }
+
+    import_exif_pairs(dst->exifData());
+    import_iptc_pairs(dst->iptcData());
+
     Exiv2::Blob blob;
 
-    Exiv2::ExifParser::encode(blob, Exiv2::bigEndian, exif);
+    Exiv2::ExifParser::encode(blob, Exiv2::bigEndian, dst->exifData());
 
     return blob;
 }
