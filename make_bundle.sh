@@ -16,11 +16,10 @@ for file in ${DLLS[*]}
 do
     cp /$SYSTEM/bin/$file bundle/
 done
-mkdir -p bundle/lib
 
 mkdir -p "bundle/share/icons/Adwaita/symbolic"
-adawaita=("actions" "devices" "mimetypes" "places" "status" "ui")
-for dir in ${adawaita[@]}
+adwaita=("actions" "devices" "mimetypes" "places" "status" "ui")
+for dir in ${adwaita[@]}
 do
     cp -r /$SYSTEM/share/icons/Adwaita/symbolic/$dir bundle/share/icons/Adwaita/symbolic/$dir
 done
