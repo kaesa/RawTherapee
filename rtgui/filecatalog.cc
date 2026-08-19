@@ -671,6 +671,8 @@ void FileCatalog::closeDir ()
     fileNameList.clear ();
     pendingFiles.clear ();
 
+    cacheMgr->clearExpiredEntries();
+
     {
         MyMutex::MyLock lock(dirEFSMutex);
         dirEFS.clear ();
@@ -1043,18 +1045,13 @@ void FileCatalog::refreshHeight ()
     set_size_request(0, newHeight + 2); // HOMBRE: yeah, +2, there's always 2 pixels missing... sorry for this dirty hack O:)
 }
 
-void FileCatalog::_openImage(const std::vector<Thumbnail*>& tmb)
+void FileCatalog::_openImage(const std::vector<std::shared_ptr<Thumbnail>>& tmb)
 {
     if (enabled && listener) {
         for (size_t i = 0; i < tmb.size(); i++) {
             // fileSelected does not complete with a fully loaded image, but it does do some preliminary checks
-            if (!listener->fileSelected(tmb[i])) {
-                tmb[i]->decreaseRef();
-            } else if (!App::get().options().tabbedUI) {
+            if (listener->fileSelected(tmb[i]) && !App::get().options().tabbedUI) {
                 // allow only one image in single editor mode
-                for (++i; i < tmb.size(); i++) {
-                    tmb[i]->decreaseRef();
-                }
                 break;
             }
         }
@@ -1072,12 +1069,8 @@ void FileCatalog::filterApplied()
     );
 }
 
-void FileCatalog::openRequested(const std::vector<Thumbnail*>& tmb)
+void FileCatalog::openRequested(const std::vector<std::shared_ptr<Thumbnail>>& tmb)
 {
-    for (const auto thumb : tmb) {
-        thumb->increaseRef();
-    }
-
     idle_register.add(
         [this, tmb]() -> bool
         {
@@ -1372,7 +1365,7 @@ void FileCatalog::developRequested(const std::vector<FileBrowserEntry*>& tbe, bo
             // processThumbImage is the processing intensive part, but adding to queue must be ordered
             //#pragma omp ordered
             //{
-            BatchQueueEntry* bqh = new BatchQueueEntry (pjob, params, fbe->filename, pw, ph, th, options.overwriteOutputFile);
+            BatchQueueEntry* bqh = new BatchQueueEntry (pjob, params, fbe->filename, pw, ph, fbe->thumbnail_sharedptr, options.overwriteOutputFile);
             entries.push_back(bqh);
             //}
         }
@@ -1441,7 +1434,7 @@ void FileCatalog::renameRequested(const std::vector<FileBrowserEntry*>& tbe)
     delete renameDlg;
 }
 
-void FileCatalog::selectionChanged(const std::vector<Thumbnail*>& tbe)
+void FileCatalog::selectionChanged(const std::vector<std::shared_ptr<Thumbnail>>& tbe)
 {
     if (fslistener) {
         fslistener->selectionChanged (tbe);
@@ -1903,6 +1896,8 @@ bool FileCatalog::eventDeletedFile(const Glib::RefPtr<Gio::File>& file)
         cacheMgr->clearFromCache(file->get_path(), true);
         delete fileBrowser->delEntry(file->get_path());
 
+        cacheMgr->clearEntry(file->get_path());
+
         fileNameList.erase(pos);
 
         _refreshProgressBar();
@@ -1934,6 +1929,8 @@ void FileCatalog::eventDeletedDirectory(const Glib::RefPtr<Gio::File>& directory
     for (const auto& toDelete : filesToDel) {
         cacheMgr->clearFromCache(toDelete, true);
         delete fileBrowser->delEntry(toDelete);
+
+        cacheMgr->clearEntry(toDelete);
 
         fileNameList.erase(std::remove(fileNameList.begin(), fileNameList.end(), toDelete), fileNameList.end());
 
@@ -2183,7 +2180,6 @@ void FileCatalog::addAndOpenFile (const Glib::ustring& fname)
         FileBrowserEntry* entry = new FileBrowserEntry(tmb, file->get_parse_name());
         previewReady(selectedDirectoryId, entry);
         // open the file
-        tmb->increaseRef();
         idle_register.add(
             [this, tmb]() -> bool
             {
