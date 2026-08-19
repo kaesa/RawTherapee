@@ -67,27 +67,30 @@ void CacheManager::init ()
     }
 }
 
-Thumbnail* CacheManager::getEntry (const Glib::ustring& fname)
+std::shared_ptr<Thumbnail> CacheManager::getEntry (const Glib::ustring& fname)
 {
-    std::unique_ptr<Thumbnail> thumbnail;
+    std::shared_ptr<Thumbnail> thumbnail = nullptr;
 
     // take manager lock and search for entry,
-    // if found return it,
-    // else release lock and create it
+    // if there is an exising valid Thumbnail, return it
     {
         MyMutex::MyLock lock (mutex);
 
-        // if it is open, return it
         const auto iterator = openEntries.find (fname);
 
         if (iterator != openEntries.end ()) {
 
-            auto cachedThumbnail = iterator->second;
+            thumbnail = iterator->second.lock();
+            if (auto existing = iterator->second.lock()) {
+                return existing;
+            }
 
-            cachedThumbnail->increaseRef ();
-            return cachedThumbnail;
+            // Thumbnail has been destroyed, but the entry was still here.
+            openEntries.erase(iterator);
         }
     }
+    //
+    // or else, release lock and create a new Thumbnail
 
     // build path name
     const auto md5 = getMD5 (fname);
@@ -115,7 +118,7 @@ Thumbnail* CacheManager::getEntry (const Glib::ustring& fname)
                 imageData.save(cacheName);
             }
 
-            thumbnail.reset (new Thumbnail (this, fname, &imageData));
+            thumbnail = std::make_shared<Thumbnail>(this, fname, &imageData);
 
             if (!thumbnail->isSupported ()) {
                 thumbnail.reset ();
@@ -123,10 +126,10 @@ Thumbnail* CacheManager::getEntry (const Glib::ustring& fname)
         }
     }
 
-    // if not, create a new one
+    // if not, create a new one from image
     if (!thumbnail) {
 
-        thumbnail.reset (new Thumbnail (this, fname, md5, xmpSidecarMd5));
+        thumbnail = std::make_shared<Thumbnail>(this, fname, md5, xmpSidecarMd5);
 
         if (!thumbnail->isSupported ()) {
             thumbnail.reset ();
@@ -141,41 +144,18 @@ Thumbnail* CacheManager::getEntry (const Glib::ustring& fname)
         const auto iterator = openEntries.find (fname);
 
         if (iterator != openEntries.end ()) {
+            if (auto existing = iterator->second.lock()) {
+                return existing;
+            }
 
-            auto cachedThumbnail = iterator->second;
-
-            cachedThumbnail->increaseRef ();
-            return cachedThumbnail;
+            openEntries.erase(iterator);
         }
 
         // it wasn't, create a new entry
-        openEntries.emplace (fname, thumbnail.get ());
+        openEntries.emplace (fname, thumbnail);
     }
 
-    return thumbnail.release ();
-}
-
-
-void CacheManager::deleteEntry (const Glib::ustring& fname)
-{
-    MyMutex::MyLock lock (mutex);
-
-    // check if it is opened
-    auto iterator = openEntries.find (fname);
-
-    if (iterator == openEntries.end ()) {
-        deleteFiles (fname, getMD5 (fname), true, true);
-        return;
-    }
-
-    auto thumbnail = iterator->second;
-
-    if (thumbnail->decreaseRefCacheMgr () == 0) {
-        // If the ref count is not zero, it is open in the editor and the thumbnail can not be deleted.
-        openEntries.erase (fname);
-        deleteFiles (fname, thumbnail->getMD5 (), true, true);
-        delete thumbnail;
-    }
+    return thumbnail;
 }
 
 void CacheManager::clearFromCache (const Glib::ustring& fname, bool purge) const
@@ -185,8 +165,11 @@ void CacheManager::clearFromCache (const Glib::ustring& fname, bool purge) const
     auto iterator = openEntries.find (fname);
 
     if (iterator != openEntries.end ()) {
-        deleteFiles (fname, iterator->second->getMD5(), true, true);
-        return;
+        std::shared_ptr<Thumbnail> thumbnail = iterator->second.lock();
+        if (thumbnail) {
+            deleteFiles (fname, thumbnail->getMD5(), true, true);
+            return;
+        }
     }
 
     const auto md5 = getMD5 (fname);
@@ -223,7 +206,7 @@ void CacheManager::renameEntry (const std::string& oldfilename, const std::strin
         return;
     }
 
-    auto thumbnail = iterator->second;
+    std::shared_ptr<Thumbnail> thumbnail = iterator->second.lock();
     openEntries.erase (iterator);
     openEntries.emplace (newfilename, thumbnail);
 
@@ -232,19 +215,37 @@ void CacheManager::renameEntry (const std::string& oldfilename, const std::strin
     thumbnail->saveThumbnail ();
 }
 
-void CacheManager::closeThumbnail (Thumbnail* thumbnail)
-{
-    MyMutex::MyLock lock (mutex);
-
-    openEntries.erase (thumbnail->getFileName ());
-    delete thumbnail;
-}
-
 void CacheManager::closeCache () const
 {
     MyMutex::MyLock lock (mutex);
 
     applyCacheSizeLimitation ();
+}
+
+void CacheManager::clearEntry (const Glib::ustring& fname)
+{
+    MyMutex::MyLock lock (mutex);
+
+    auto iterator = openEntries.find (fname);
+
+    if (iterator != openEntries.end ()) {
+        if (iterator->second.expired()) {
+            openEntries.erase(iterator);
+        }
+    }
+}
+
+void CacheManager::clearExpiredEntries ()
+{
+    MyMutex::MyLock lock (mutex);
+
+    for (auto it = openEntries.begin(); it != openEntries.end(); ) {
+        if (it->second.expired()) {
+            it = openEntries.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void CacheManager::clearAll () const

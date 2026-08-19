@@ -109,7 +109,8 @@ private:
 
 public:
 
-    Thumbnail* thumbnail;
+    std::shared_ptr<Thumbnail>  thumbnail_sharedptr;///< Used for lifetime management and higher level interface functions.
+    Thumbnail*                  thumbnail;          ///< Used internally and with rtengine.
 
 // thumbnail preview properties:
     Glib::ustring filename;
@@ -128,7 +129,7 @@ public:
     bool updatepriority;
     eWithFilename withFilename;
 
-    explicit ThumbBrowserEntryBase (const Glib::ustring& fname, Thumbnail *thm);
+    explicit ThumbBrowserEntryBase (const Glib::ustring& fname, const std::shared_ptr<Thumbnail>& thm);
     virtual ~ThumbBrowserEntryBase ();
 
     void setParent (ThumbBrowserBase* l)

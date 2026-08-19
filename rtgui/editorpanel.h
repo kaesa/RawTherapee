@@ -74,7 +74,7 @@ public:
     explicit EditorPanel (FilePanel* filePanel = nullptr);
     ~EditorPanel () override;
 
-    void open (Thumbnail* tmb, rtengine::InitialImage* isrc);
+    void open (std::shared_ptr<Thumbnail> tmb, rtengine::InitialImage* isrc);
     void setAspect ();
     void on_realize () override;
     void leftPaneButtonReleased (GdkEventButton *event);
@@ -291,7 +291,8 @@ private:
 
     bool firstProcessingDone;
 
-    Thumbnail* openThm;  // may get invalid on external delete event
+    std::shared_ptr<Thumbnail> openThm_sharedptr;   ///< For memory management and high level interface.
+    Thumbnail* openThm;                             ///< For internal use and for rtengine.
     Glib::ustring fname;  // must be saved separately
 
     int selectedFrame;

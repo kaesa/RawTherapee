@@ -74,11 +74,11 @@ public:
     void saveOptions ();
 
     // interface fileselectionlistener
-    bool fileSelected(Thumbnail* thm) override;
+    bool fileSelected(std::shared_ptr<Thumbnail> thm) override;
     bool addBatchQueueJobs(const std::vector<BatchQueueEntry*>& entries) override;
 
     void optionsChanged         ();
-    bool imageLoaded( Thumbnail* thm, ProgressConnector<rtengine::InitialImage*> * );
+    bool imageLoaded(std::shared_ptr<Thumbnail> thm, ProgressConnector<rtengine::InitialImage*> * );
 
     bool handleShortcutKey (GdkEventKey* event);
     bool handleShortcutKeyRelease(GdkEventKey *event);
@@ -103,7 +103,7 @@ private:
     struct pendingLoad {
         bool complete;
         ProgressConnector<rtengine::InitialImage*> *pc;
-        Thumbnail *thm;
+        std::shared_ptr<Thumbnail> thm;
     };
     MyMutex pendingLoadMutex;
     std::vector<struct pendingLoad*> pendingLoads;
