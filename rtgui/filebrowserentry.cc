@@ -44,7 +44,7 @@ std::shared_ptr<RTSurface> FileBrowserEntry::enqueuedIcon(std::shared_ptr<RTSurf
 std::shared_ptr<RTSurface> FileBrowserEntry::hdr(std::shared_ptr<RTSurface>(nullptr));
 std::shared_ptr<RTSurface> FileBrowserEntry::ps(std::shared_ptr<RTSurface>(nullptr));
 
-FileBrowserEntry::FileBrowserEntry (Thumbnail* thm, const Glib::ustring& fname)
+FileBrowserEntry::FileBrowserEntry (const std::shared_ptr<Thumbnail>& thm, const Glib::ustring& fname)
     : ThumbBrowserEntryBase(fname, thm), wasInside(false), iatlistener(nullptr), press_x(0), press_y(0), action_x(0), action_y(0), rot_deg(0.0), landscape(true)
     , cropParams(new rtengine::procparams::CropParams)
     , cropGuideParams(new rtengine::procparams::CropGuideParams)
@@ -80,7 +80,6 @@ FileBrowserEntry::~FileBrowserEntry ()
 
     if (thumbnail) {
         thumbnail->removeThumbnailListener (this);
-        thumbnail->decreaseRef ();
     }
 }
 

@@ -1247,7 +1247,7 @@ void EditorPanel::on_realize ()
     tpc->updateToolState();
 }
 
-void EditorPanel::open (Thumbnail* tmb, rtengine::InitialImage* isrc)
+void EditorPanel::open (std::shared_ptr<Thumbnail> tmb, rtengine::InitialImage* isrc)
 {
 
     close();
@@ -1255,7 +1255,8 @@ void EditorPanel::open (Thumbnail* tmb, rtengine::InitialImage* isrc)
     isProcessing = true; // prevents closing-on-init
 
     // initialize everything
-    openThm = tmb;
+    openThm_sharedptr = tmb;
+    openThm = openThm_sharedptr.get();
 
     fname = openThm->getFileName();
     if (fPanel && fPanel->fileCatalog) {
@@ -1352,7 +1353,6 @@ void EditorPanel::close ()
         // If the file was deleted somewhere, the openThm.descreaseRef delete the object, but we don't know here
         if (Glib::file_test (fname, Glib::FILE_TEST_EXISTS)) {
             openThm->removeThumbnailListener (this);
-            openThm->decreaseRef ();
         }
     }
 }
@@ -2101,7 +2101,7 @@ BatchQueueEntry* EditorPanel::createBatchQueueEntry ()
     isrc->getImageSource()->getFullSize (fullW, fullH, pparams.coarse.rotate == 90 || pparams.coarse.rotate == 270 ? TR_R90 : TR_NONE);
     int prevh = BatchQueue::calcMaxThumbnailHeight();
     int prevw = int ((size_t)fullW * (size_t)prevh / (size_t)fullH);
-    return new BatchQueueEntry (job, pparams, openThm->getFileName(), prevw, prevh, openThm, App::get().options().overwriteOutputFile);
+    return new BatchQueueEntry (job, pparams, openThm->getFileName(), prevw, prevh, openThm_sharedptr, App::get().options().overwriteOutputFile);
 }
 
 

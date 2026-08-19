@@ -290,7 +290,7 @@ private:
     {
         if (create_window()) {
             struct Data {
-                std::vector<Thumbnail *> entries;
+                std::vector<std::shared_ptr<Thumbnail>> entries;
                 Glib::ustring lastfilename;
                 FileCatalog *filecatalog;
             };
@@ -298,7 +298,7 @@ private:
             d->filecatalog = rtWindow->fpanel->fileCatalog;
 
             for (const auto &f : files) {
-                Thumbnail *thm = cacheMgr->getEntry (f->get_path());
+                std::shared_ptr<Thumbnail> thm = cacheMgr->getEntry (f->get_path());
 
                 if (thm) {
                     d->entries.push_back (thm);

@@ -614,8 +614,8 @@ void FileBrowser::doubleClicked (ThumbBrowserEntryBase* entry)
 {
 
     if (tbl && entry) {
-        std::vector<Thumbnail*> entries;
-        entries.push_back ((static_cast<FileBrowserEntry*>(entry))->thumbnail);
+        std::vector<std::shared_ptr<Thumbnail>> entries;
+        entries.push_back (entry->thumbnail_sharedptr);
         tbl->openRequested (entries);
     }
 }
@@ -1842,7 +1842,7 @@ void FileBrowser::openNextImage()
                             double x2 = selected[0]->getStartX();
                             double y2 = selected[0]->getStartY();
 
-                            Thumbnail* thumb = (static_cast<FileBrowserEntry*>(fd[k]))->thumbnail;
+                            std::shared_ptr<Thumbnail>& thumb = fd[k]->thumbnail_sharedptr;
                             int tw = fd[k]->getMinimalWidth(); // thumb width
 
                             int ww = get_width(); // window width
@@ -1905,7 +1905,7 @@ void FileBrowser::openPrevImage()
                             double x2 = selected[0]->getStartX();
                             double y2 = selected[0]->getStartY();
 
-                            Thumbnail* thumb = (static_cast<FileBrowserEntry*>(fd[k]))->thumbnail;
+                            std::shared_ptr<Thumbnail>& thumb = fd[k]->thumbnail_sharedptr;
                             int tw = fd[k]->getMinimalWidth(); // thumb width
 
                             int ww = get_width(); // window width
@@ -2016,10 +2016,10 @@ void FileBrowser::notifySelectionListener ()
     if (tbl) {
         MYREADERLOCK(l, entryRW);
 
-        std::vector<Thumbnail*> thm;
+        std::vector<std::shared_ptr<Thumbnail>> thm;
 
         for (size_t i = 0; i < selected.size(); i++) {
-            thm.push_back ((static_cast<FileBrowserEntry*>(selected[i]))->thumbnail);
+            thm.push_back (selected[i]->thumbnail_sharedptr);
         }
 
         tbl->selectionChanged (thm);
@@ -2157,12 +2157,12 @@ void FileBrowser::restoreValue()
 
 void FileBrowser::openRequested( std::vector<FileBrowserEntry*> mselected)
 {
-    std::vector<Thumbnail*> entries;
+    std::vector<std::shared_ptr<Thumbnail>> entries;
     // in Single Editor Mode open only last selected image
     size_t openStart = App::get().options().tabbedUI ? 0 : ( mselected.size() > 0 ? mselected.size() - 1 : 0);
 
     for (size_t i = openStart; i < mselected.size(); i++) {
-        entries.push_back (mselected[i]->thumbnail);
+        entries.push_back (mselected[i]->thumbnail_sharedptr);
     }
 
     tbl->openRequested (entries);

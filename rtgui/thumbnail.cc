@@ -791,39 +791,6 @@ bool Thumbnail::isHDR () const
     return cfs.isHDR;
 }
 
-void Thumbnail::increaseRef ()
-{
-    MyMutex::MyLock lock(mutex);
-    ++ref;
-}
-
-void Thumbnail::decreaseRef ()
-{
-    {
-        MyMutex::MyLock lock(mutex);
-
-        if ( ref == 0 ) {
-            return;
-        }
-
-        if ( --ref != 0 ) {
-            return;
-        }
-    }
-    cachemgr->closeThumbnail (this);
-}
-
-int Thumbnail::decreaseRefCacheMgr ()
-{
-    MyMutex::MyLock lock(mutex);
-
-    if ( ref == 0 ) {
-        return 0;
-    }
-
-    return --ref;
-}
-
 void Thumbnail::getThumbnailSize(int &w, int &h, const rtengine::procparams::ProcParams *pparams)
 {
     MyMutex::MyLock lock(mutex);
@@ -1292,8 +1259,6 @@ void Thumbnail::setTrashed(bool trashed)
 
 void Thumbnail::addThumbnailListener (ThumbnailListener* tnl)
 {
-
-    increaseRef();
     listeners.push_back (tnl);
 }
 
@@ -1304,7 +1269,6 @@ void Thumbnail::removeThumbnailListener (ThumbnailListener* tnl)
 
     if (f != listeners.end()) {
         listeners.erase (f);
-        decreaseRef();
     }
 }
 

@@ -421,7 +421,6 @@ bool BatchQueue::loadBatchQueue ()
             thumb->getThumbnailSize(prevw, prevh, &pparams);
 
             auto entry = new BatchQueueEntry (job, pparams, source, prevw, prevh, thumb, options.overwriteOutputFile);
-            thumb->decreaseRef ();  // Removing the refCount acquired by cacheMgr->getEntry
             entry->setParent (this);
 
             // BatchQueueButtonSet have to be added before resizing to take them into account
@@ -657,8 +656,8 @@ void BatchQueue::updateDestinationPathPreview()
 void BatchQueue::openItemInEditor(ThumbBrowserEntryBase* item)
 {
     if (item) {
-        std::vector< ::Thumbnail*> requestedItem;
-        requestedItem.push_back(item->thumbnail);
+        std::vector<std::shared_ptr<::Thumbnail>> requestedItem;
+        requestedItem.push_back(item->thumbnail_sharedptr);
         fileCatalog->openRequested(requestedItem);
     }
 }

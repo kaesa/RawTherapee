@@ -39,7 +39,7 @@ private:
 protected:
     rtengine::procparams::ProcParams pparams;
     ParamsEdited pparamsEdited;
-    std::vector<Thumbnail*> selected;
+    std::vector<std::shared_ptr<Thumbnail>> selected;
     std::vector<Glib::ustring> selFileNames;
     std::vector<rtengine::procparams::ProcParams> initialPP;
     bool somethingChanged;
@@ -54,7 +54,7 @@ public:
     explicit BatchToolPanelCoordinator (FilePanel* parent);
 
     // FileSelectionChangeListener interface
-    void selectionChanged (const std::vector<Thumbnail*>& selected) override;
+    void selectionChanged (const std::vector<std::shared_ptr<Thumbnail>>& selected) override;
 
     // toolpanellistener interface
     void panelChanged(const rtengine::ProcEvent& event, const Glib::ustring& descr) override;

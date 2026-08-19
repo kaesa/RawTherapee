@@ -122,7 +122,7 @@ public:
 
         // do processing unlocked
         try {
-            Thumbnail* tmb = nullptr;
+            std::shared_ptr<Thumbnail> tmb = nullptr;
 
             if (Glib::file_test(j.dir_entry_, Glib::FILE_TEST_EXISTS)) {
                 tmb = cacheMgr->getEntry(j.dir_entry_);
