@@ -120,7 +120,7 @@ Glib::ustring getPaddedName(const Glib::ustring& name)
 
 }
 
-ThumbBrowserEntryBase::ThumbBrowserEntryBase (const Glib::ustring& fname, Thumbnail *thm) :
+ThumbBrowserEntryBase::ThumbBrowserEntryBase (const Glib::ustring& fname, const std::shared_ptr<Thumbnail>& thm) :
     fnlabw(0),
     fnlabh(0),
     dtlabw(0),
@@ -154,7 +154,6 @@ ThumbBrowserEntryBase::ThumbBrowserEntryBase (const Glib::ustring& fname, Thumbn
     cursor_type(CSUndefined),
     collate_name(getPaddedName(dispname).casefold_collate_key()),
     collate_exif(getPaddedName(thm->getExifString()).casefold_collate_key()),
-    thumbnail(thm),
     filename(fname),
     selected(false),
     drawable(false),
@@ -167,6 +166,8 @@ ThumbBrowserEntryBase::ThumbBrowserEntryBase (const Glib::ustring& fname, Thumbn
     updatepriority(false),
     withFilename(WFNAME_NONE)
 {
+    thumbnail_sharedptr = thm;
+    thumbnail = thumbnail_sharedptr.get();
 }
 
 ThumbBrowserEntryBase::~ThumbBrowserEntryBase ()

@@ -329,7 +329,7 @@ RTWindow::RTWindow ()
         pldBridge = nullptr; // No progress listener
 
         CacheManager* cm = CacheManager::getInstance();
-        Thumbnail* thm = cm->getEntry ( App::get().argv1() );
+        std::shared_ptr<Thumbnail> thm = cm->getEntry ( App::get().argv1() );
 
         if (thm) {
             int error;
@@ -461,7 +461,7 @@ RTWindow::RTWindow ()
         bpanel->init (this);
 
         if (!App::get().argv1().empty() && !App::get().isRemote()) {
-            Thumbnail* thm = cacheMgr->getEntry (App::get().argv1());
+            std::shared_ptr<Thumbnail> thm = cacheMgr->getEntry (App::get().argv1());
 
             if (thm) {
                 fpanel->fileCatalog->openRequested ({thm});

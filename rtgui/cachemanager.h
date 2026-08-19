@@ -18,6 +18,7 @@
  */
 #pragma once
 
+#include <memory>
 #include <map>
 #include <string>
 
@@ -34,7 +35,7 @@ class CacheManager :
     public rtengine::NonCopyable
 {
 private:
-    using Entries = std::map<std::string, Thumbnail*>;
+    using Entries = std::map<std::string, std::weak_ptr<Thumbnail>>;
     Entries openEntries;
     Glib::ustring    baseDir;
     mutable MyMutex  mutex;
@@ -50,12 +51,13 @@ public:
 
     void        init        ();
 
-    Thumbnail*  getEntry    (const Glib::ustring& fname);
-    void        deleteEntry (const Glib::ustring& fname);
+    std::shared_ptr<Thumbnail> getEntry (const Glib::ustring& fname);
     void        renameEntry (const std::string& oldfilename, const std::string& oldmd5, const std::string& newfilename);
 
-    void closeThumbnail (Thumbnail* thumbnail);
     void closeCache () const;
+
+    void clearEntry (const Glib::ustring& fname);   ///< Attempts at removing the a Thumbnail from cache. If no one is currently owning the entry through shared_ptr, it will get removed.
+    void clearExpiredEntries ();                    ///< Clears all expired entries from the cache.
 
     void clearAll () const;
     void clearImages () const;

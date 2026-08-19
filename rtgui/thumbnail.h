@@ -188,10 +188,6 @@ public:
     void            addThumbnailListener (ThumbnailListener* tnl);
     void            removeThumbnailListener (ThumbnailListener* tnl);
 
-    void            increaseRef ();
-    void            decreaseRef ();
-    int             decreaseRefCacheMgr (); ///< Special version used by the CacheManager
-
     void            updateCache (bool updatePParams = true, bool updateCacheImageData = true);
     void            saveThumbnail ();
 

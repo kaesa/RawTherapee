@@ -43,7 +43,7 @@ BatchToolPanelCoordinator::BatchToolPanelCoordinator (FilePanel* parent) : ToolP
     }
 }
 
-void BatchToolPanelCoordinator::selectionChanged (const std::vector<Thumbnail*>& selected)
+void BatchToolPanelCoordinator::selectionChanged (const std::vector<std::shared_ptr<Thumbnail>>& selected)
 {
 
     if (selected != this->selected) {
@@ -782,7 +782,7 @@ void BatchToolPanelCoordinator::spotWBselected (int x, int y, Thumbnail* thm)
     if (x > 0 && y > 0 && thm) {
         const auto& options = App::get().options();
         for (size_t i = 0; i < selected.size(); i++)
-            if (selected[i] == thm) {
+            if (selected[i].get() == thm) {
                 double temp;
                 double green;
                 thm->getSpotWB (x, y, whitebalance->getSize(), temp, green);

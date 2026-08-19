@@ -80,7 +80,7 @@ public:
     static std::shared_ptr<RTSurface> hdr;
     static std::shared_ptr<RTSurface> ps;
 
-    FileBrowserEntry (Thumbnail* thm, const Glib::ustring& fname);
+    FileBrowserEntry (const std::shared_ptr<Thumbnail>& thm, const Glib::ustring& fname);
     ~FileBrowserEntry () override;
     static void init ();
     void draw (Cairo::RefPtr<Cairo::Context> cc) override;

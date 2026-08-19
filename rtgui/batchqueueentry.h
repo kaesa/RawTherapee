@@ -67,7 +67,7 @@ public:
     bool fast_pipeline;
     bool overwriteFile;
 
-    BatchQueueEntry (rtengine::ProcessingJob* job, const rtengine::procparams::ProcParams& pparams, Glib::ustring fname, int prevw, int prevh, Thumbnail* thm = nullptr, bool overwrite = false);
+    BatchQueueEntry (rtengine::ProcessingJob* job, const rtengine::procparams::ProcParams& pparams, Glib::ustring fname, int prevw, int prevh, std::shared_ptr<Thumbnail>& thm, bool overwrite = false);
     ~BatchQueueEntry () override;
 
     void refreshThumbnailImage () override;

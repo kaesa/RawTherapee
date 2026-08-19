@@ -130,7 +130,6 @@ void BatchQueueEntryUpdater::processThread ()
             double tmpscale;
             rtengine::IImage8* img = current.thumbnail->processThumbImage (*current.pparams, current.oh, tmpscale);
 
-            //current.thumbnail->decreaseRef (); // WARNING: decreasing refcount (and maybe deleting) thumbnail, with or without processed image
             if (img) {
                 int prevw = img->getWidth();
                 int prevh = img->getHeight();
