@@ -248,7 +248,7 @@ void FilePanel::on_NB_switch_page(Gtk::Widget* page, guint page_num)
     }
 }
 
-bool FilePanel::fileSelected (Thumbnail* thm)
+bool FilePanel::fileSelected (std::shared_ptr<Thumbnail> thm)
 {
     if (!parent) {
         return false;
@@ -256,7 +256,6 @@ bool FilePanel::fileSelected (Thumbnail* thm)
 
     // Check if it's already open BEFORE loading the file
     if (App::get().options().tabbedUI && parent->selectEditorPanel(thm->getFileName())) {
-        thm->decreaseRef();
         return true;
     }
 
@@ -290,7 +289,7 @@ bool FilePanel::addBatchQueueJobs(const std::vector<BatchQueueEntry*>& entries)
     return true;
 }
 
-bool FilePanel::imageLoaded( Thumbnail* thm, ProgressConnector<rtengine::InitialImage*> *pc )
+bool FilePanel::imageLoaded(std::shared_ptr<Thumbnail> thm, ProgressConnector<rtengine::InitialImage*> *pc )
 {
 
     pendingLoadMutex.lock();
@@ -305,7 +304,6 @@ bool FilePanel::imageLoaded( Thumbnail* thm, ProgressConnector<rtengine::Initial
     }
 
     const auto& options = App::get().options();
-    bool decThumbRef = false;
 
     // The purpose of the pendingLoads vector is to open tabs in the same order as the loads where initiated. It has no effect on single editor mode.
     while (pendingLoads.size() > 0 && pendingLoads.front()->complete) {
@@ -330,7 +328,6 @@ bool FilePanel::imageLoaded( Thumbnail* thm, ProgressConnector<rtengine::Initial
                         Glib::ustring msg_ = Glib::ustring("<b>") + M("MAIN_MSG_CANNOTLOAD") + " \"" + escapeHtmlChars(thm->getFileName()) + "\" .\n" + M("MAIN_MSG_TOOMANYOPENEDITORS") + "</b>";
                         Gtk::MessageDialog msgd (*parent, msg_, true, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                         msgd.run ();
-                        decThumbRef = true;
                         goto MAXGDIHANDLESREACHED;
                     }
 #endif
@@ -352,7 +349,6 @@ bool FilePanel::imageLoaded( Thumbnail* thm, ProgressConnector<rtengine::Initial
             Glib::ustring msg_ = Glib::ustring("<b>") + M("MAIN_MSG_CANNOTLOAD") + " \"" + escapeHtmlChars(thm->getFileName()) + "\" .\n</b>";
             Gtk::MessageDialog msgd (*parent, msg_, true, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             msgd.run ();
-            decThumbRef = true;
         }
 #ifdef _WIN32
 MAXGDIHANDLESREACHED:
@@ -372,9 +368,6 @@ MAXGDIHANDLESREACHED:
     pendingLoadMutex.unlock();
 
     thm->imageLoad( false );
-    if (decThumbRef) {
-        thm->decreaseRef();
-    }
 
     return false; // MUST return false from idle function
 }

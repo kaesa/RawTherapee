@@ -34,7 +34,7 @@
 bool BatchQueueEntry::iconsLoaded(false);
 std::shared_ptr<RTSurface> BatchQueueEntry::savedAsIcon(std::shared_ptr<RTSurface>(nullptr));
 
-BatchQueueEntry::BatchQueueEntry (rtengine::ProcessingJob* pjob, const rtengine::procparams::ProcParams& pparams, Glib::ustring fname, int prevw, int prevh, Thumbnail* thm, bool overwrite) :
+BatchQueueEntry::BatchQueueEntry (rtengine::ProcessingJob* pjob, const rtengine::procparams::ProcParams& pparams, Glib::ustring fname, int prevw, int prevh, std::shared_ptr<Thumbnail>& thm, bool overwrite) :
     ThumbBrowserEntryBase(fname, thm),
     opreview(nullptr),
     origpw(prevw),
@@ -49,21 +49,17 @@ BatchQueueEntry::BatchQueueEntry (rtengine::ProcessingJob* pjob, const rtengine:
     overwriteFile(overwrite)
 {
 
-    thumbnail = thm;
+    thumbnail_sharedptr = thm;
+    thumbnail = thumbnail_sharedptr.get();
 
     if (!iconsLoaded) {
         savedAsIcon = std::shared_ptr<RTSurface>(new RTSurface("save-small", Gtk::ICON_SIZE_SMALL_TOOLBAR));
         iconsLoaded = true;
     }
-
-    if (thumbnail) {
-        thumbnail->increaseRef ();
-    }
 }
 
 BatchQueueEntry::~BatchQueueEntry ()
 {
-
     batchQueueEntryUpdater.removeJobs (this);
 
     if (opreview) {
@@ -71,10 +67,6 @@ BatchQueueEntry::~BatchQueueEntry ()
     }
 
     opreview = nullptr;
-
-    if (thumbnail) {
-        thumbnail->decreaseRef ();
-    }
 }
 
 void BatchQueueEntry::refreshThumbnailImage ()

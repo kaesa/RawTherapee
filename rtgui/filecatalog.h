@@ -244,12 +244,12 @@ public:
     void refreshHeight ();
 
     void filterApplied() override;
-    void openRequested(const std::vector<Thumbnail*>& tbe) override;
+    void openRequested(const std::vector<std::shared_ptr<Thumbnail>>& tbe) override;
     void deleteRequested(const std::vector<FileBrowserEntry*>& tbe, bool inclBatchProcessed, bool onlySelected) override;
     void copyMoveRequested(const std::vector<FileBrowserEntry*>& tbe, bool moveRequested) override;
     void developRequested(const std::vector<FileBrowserEntry*>& tbe, bool fastmode) override;
     void renameRequested(const std::vector<FileBrowserEntry*>& tbe) override;
-    void selectionChanged(const std::vector<Thumbnail*>& tbe) override;
+    void selectionChanged(const std::vector<std::shared_ptr<Thumbnail>>& tbe) override;
     void clearFromCacheRequested(const std::vector<FileBrowserEntry*>& tbe, bool leavenotrace) override;
     bool isInTabMode() const override;
 
@@ -282,7 +282,7 @@ public:
     bool restoreResetState ();
 
     void on_realize() override;
-    void _openImage (const std::vector<Thumbnail*>& tmb);
+    void _openImage (const std::vector<std::shared_ptr<Thumbnail>>& tmb);
 
     void zoomIn ();
     void zoomOut ();

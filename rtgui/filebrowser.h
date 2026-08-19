@@ -43,12 +43,12 @@ class FileBrowserListener
 public:
     virtual ~FileBrowserListener() = default;
     virtual void filterApplied() = 0;
-    virtual void openRequested(const std::vector<Thumbnail*>& tbe) = 0;
+    virtual void openRequested(const std::vector<std::shared_ptr<Thumbnail>>& tbe) = 0;
     virtual void developRequested(const std::vector<FileBrowserEntry*>& tbe, bool fastmode) = 0;
     virtual void renameRequested(const std::vector<FileBrowserEntry*>& tbe) = 0;
     virtual void deleteRequested(const std::vector<FileBrowserEntry*>& tbe, bool inclBatchProcessed, bool onlySelected) = 0;
     virtual void copyMoveRequested(const std::vector<FileBrowserEntry*>& tbe, bool moveRequested) = 0;
-    virtual void selectionChanged(const std::vector<Thumbnail*>& tbe) = 0;
+    virtual void selectionChanged(const std::vector<std::shared_ptr<Thumbnail>>& tbe) = 0;
     virtual void clearFromCacheRequested(const std::vector<FileBrowserEntry*>& tbe, bool leavenotrace) = 0;
     virtual bool isInTabMode() const = 0;
 };
